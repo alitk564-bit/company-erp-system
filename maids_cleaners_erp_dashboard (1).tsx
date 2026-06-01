@@ -4,24 +4,14 @@ import {
 } from 'recharts';
 import { 
   LayoutDashboard, Database, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, AlertCircle, Menu, X, Calendar, Filter, Briefcase, Users, Bell,
-  Lock, Eye, EyeOff
+  ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, AlertCircle, Menu, X, Calendar, Filter, Briefcase, Users, Bell
 } from 'lucide-react';
-
 
 // --- CONFIGURATION ---
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLSY4ZgGWGCTe5oTtwp8rXS8HrU6dQsBUDKIt0GckZvZ4pS6fX0XShrhoM0AfVxFJiIod-sd9nf2Su/pub?output=csv';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const PASSWORD_HASH = "2588c917d96cf27d16f7515675fa70ddc62abaca5f2941425144e04490901567"; // Secure SHA-256 hash of password
 
 // --- UTILITIES ---
-const sha256 = async (string) => {
-  const utf8 = new TextEncoder().encode(string);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
 const parseFlexibleDate = (dateStr) => {
   if (dateStr === null || dateStr === undefined) return null;
   let str = String(dateStr).trim();
@@ -120,7 +110,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('analytics');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('maids_erp_auth') === 'true');
 
   const fetchData = async () => {
     try {
@@ -230,10 +219,6 @@ export default function App() {
     w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
     ${activeTab === tabId ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
   `;
-
-  if (!isAuthenticated) {
-    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
-  }
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
@@ -1236,81 +1221,6 @@ function FollowUpsView({ data }) {
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-function LoginScreen({ onLogin }) {
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const hash = await sha256(password);
-      if (hash === PASSWORD_HASH) {
-        localStorage.setItem('maids_erp_auth', 'true');
-        onLogin();
-      } else {
-        setError('Incorrect password. Please try again.');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12 font-sans text-slate-900">
-      <Card className="w-full max-w-md p-8 shadow-md border border-slate-200 bg-white">
-        <div className="flex flex-col items-center justify-center text-center space-y-4 mb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-            <Lock className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Maids and Cleaners ERP</h2>
-            <p className="text-sm text-slate-500 mt-1">Please enter your password to access the dashboard</p>
-          </div>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 hover:text-slate-600 focus:outline-none"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {error && (
-            <div className="text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md p-2 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Authenticating...' : 'Access Dashboard'}
-          </Button>
-        </form>
-      </Card>
     </div>
   );
 }
